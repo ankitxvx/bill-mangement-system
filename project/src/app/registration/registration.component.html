@@ -1,0 +1,53 @@
+<div class="app-registration" *ngIf="!showAck">
+
+</div>
+
+<form *ngIf="!showAck" [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
+  
+  <h1>Customer Registeration</h1>
+  <h3>User Details</h3>
+  <div class="UserDetails">
+    <label for="title">Title</label>
+    <select formControlName="title" required>
+      <option value="">Select</option>
+      <option value="Mr">Mr</option>
+      <option value="Mrs">Mrs</option>
+    </select>
+
+    <label for="name">Name</label>
+    <input type="text" formControlName="name" placeholder="Enter your name" required />
+
+    <label for="countrycode">Country Code</label>
+    <select formControlName="countryCode" required>
+      <option value="+91">+91-India</option>
+      <option value="+1">+1-USA</option>
+    </select>
+
+    <label for="mobile">Mobile Number</label>
+    <input type="number" formControlName="mobile" required maxlength="10"/>
+  </div>
+
+  <h3>Login Details</h3>
+  <div class="loginDetails">
+    <label for="email">Email</label>
+    <input type="email" formControlName="email" required />
+
+    <label for="password">Password</label>
+    <input type="password" formControlName="password" required />
+
+    <label for="confirmPassword">Confirm Password</label>
+    <input type="password" formControlName="confirmPassword" required />
+  </div>
+
+  <div class="button">
+    <button type="submit">Register</button>
+    <button type="reset" (click)="onReset()">Reset</button>
+  </div>
+</form>
+
+<div class="acknowledgment" *ngIf="showAck">
+  <p class="success">Consumer Registration successful.</p>
+  <p><strong>Customer ID:</strong> <span>{{ registeredUser?.userId }}</span></p>
+  <p><strong>Customer Name:</strong> <span>{{ registeredUser?.title }} {{ registeredUser?.name }}</span></p>
+  <p><strong>Email:</strong> <span>{{ registeredUser?.email }}</span></p>
+</div>

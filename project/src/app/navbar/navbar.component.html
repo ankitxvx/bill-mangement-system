@@ -1,0 +1,10 @@
+<div class="navbar">
+  <a (click)="goToHome()">Home</a>
+  <a (click)="goToPage('pay-bill')">Pay Bill</a>
+  <a (click)="goToPage('register-complaint')">Register Complaint</a>
+  <a (click)="goToPage('complaint-status')">Complaint Status</a>
+  <span class="user-info">
+    Welcome Customer {{ customerId }}
+    <button (click)="logout()">Logout</button>
+  </span>
+</div>

@@ -1,0 +1,1082 @@
+==========================================================
+ANGULAR PROJECT COMPONENTS - COMPLETE CODE REFERENCE
+==========================================================
+
+This file contains all the component files for the Angular customer management application.
+
+==========================================================
+1. LOGIN COMPONENT
+==========================================================
+
+===== login.component.html =====
+<div class="container">
+  <form id="loginForm" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+    <h1 class="head">Login</h1>
+
+    <div class="form-group">
+      <label for="email">Email</label>
+      <input type="email" id="email" formControlName="email" />
+      <div class="error" *ngIf="loginForm.get('email')?.invalid && loginForm.get('email')?.touched">
+        Valid email is required.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="userId">User ID</label>
+      <input type="number" id="userId" formControlName="userId" />
+      <div class="error" *ngIf="loginForm.get('userId')?.invalid && loginForm.get('userId')?.touched">
+        Valid User ID is required.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="password">Password</label>
+      <input type="password" id="password" formControlName="password" />
+      <div class="error" *ngIf="loginForm.get('password')?.invalid && loginForm.get('password')?.touched">
+        Password is required.
+      </div>
+    </div>
+
+    <div id="sub">
+      <button type="submit">Sign In</button>
+    </div>
+
+    <a routerLink="/register">New User Registration</a>
+  </form>
+</div>
+
+===== login.component.css =====
+body{
+ background-color: #f4f6f8;
+ margin: 0;
+ padding: 0; 
+ font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+}
+
+.container {
+  max-width: 400px;
+  margin: 100px auto;
+  padding: 20px;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+#loginForm {
+  display: flex;
+  flex-direction: column;
+}
+
+.head {
+  text-align: center;
+  color: rgb(5, 164, 226);
+  margin-bottom: 20px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: rgb(5, 164, 226);
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  box-shadow: inset 0 0 5px rgba(5, 164, 226, 0.3);
+  font-size: 14px;
+}
+
+.error {
+  color: red;
+  font-size: 0.9em;
+  margin-top: 5px;
+}
+
+#sub {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+#sub button {
+  padding: 10px 20px;
+  background-color: rgb(5, 164, 226);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+#sub button:hover {
+  background-color: rgb(4, 140, 195);
+}
+
+a {
+  display: block;
+  text-align: center;
+  margin-top: 15px;
+  color: rgb(5, 164, 226);
+  text-decoration: none;
+  font-weight: bold;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+===== login.component.ts =====
+import { Component } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-login',
+  templateUrl: './login.component.html',
+  styleUrls: ['./login.component.css']
+})
+export class LoginComponent {
+  loginForm: FormGroup;
+  errorMessage: string = '';
+  successMessage: string = '';
+
+  constructor(private fb: FormBuilder, private router: Router) {
+    this.loginForm = this.fb.group({
+      email: ['', [Validators.required, Validators.email]],
+      userId: ['', [Validators.required]],
+      password: ['', [Validators.required, Validators.minLength(6)]]
+    });
+  }
+
+  async onSubmit(): Promise<void> {
+    if (this.loginForm.invalid) {
+      this.errorMessage = 'Please enter a valid email and password.';
+      this.successMessage = '';
+      return;
+    }
+
+    const { email, password } = this.loginForm.value;
+
+    try {
+      const response = await fetch('http://localhost:8084/api/customers/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ email, password })
+      });
+
+      if (!response.ok) {
+        throw new Error('Login failed');
+      }
+
+      const data = await response.json();
+      console.log('Login successful:', data);
+
+      this.successMessage = 'Login successful!';
+      this.errorMessage = '';
+      localStorage.setItem('userId', data.consumerId); // Fixed: use consumerId instead of customerId
+      
+      // Redirect to home page after successful login
+      this.router.navigate(['/home']);
+    } catch (error) {
+      console.error('Login error:', error);
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        this.errorMessage = 'Unable to connect to server. Please make sure the backend server is running on port 8084.';
+      } else {
+        this.errorMessage = 'Invalid email or password.';
+      }
+      this.successMessage = '';
+    }
+  }
+
+  get email() {
+    return this.loginForm.get('email');
+  }
+
+  get password() {
+    return this.loginForm.get('password');
+  }
+}
+
+===== login.component.spec.ts =====
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { LoginComponent } from './login.component';
+
+describe('LoginComponent', () => {
+  let component: LoginComponent;
+  let fixture: ComponentFixture<LoginComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [ LoginComponent ]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(LoginComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+==========================================================
+2. REGISTRATION COMPONENT
+==========================================================
+
+===== registration.component.html =====
+<div class="app-registration" *ngIf="!showAck">
+
+</div>
+
+<form *ngIf="!showAck" [formGroup]="registrationForm" (ngSubmit)="onSubmit()">
+  
+  <h1>Customer Registeration</h1>
+  <h3>User Details</h3>
+  <div class="UserDetails">
+    <label for="title">Title</label>
+    <select formControlName="title" required>
+      <option value="">Select</option>
+      <option value="Mr">Mr</option>
+      <option value="Mrs">Mrs</option>
+    </select>
+
+    <label for="name">Name</label>
+    <input type="text" formControlName="name" placeholder="Enter your name" required />
+
+    <label for="countrycode">Country Code</label>
+    <select formControlName="countryCode" required>
+      <option value="+91">+91-India</option>
+      <option value="+1">+1-USA</option>
+    </select>
+
+    <label for="mobile">Mobile Number</label>
+    <input type="number" formControlName="mobile" required maxlength="10"/>
+  </div>
+
+  <h3>Login Details</h3>
+  <div class="loginDetails">
+    <label for="email">Email</label>
+    <input type="email" formControlName="email" required />
+
+    <label for="password">Password</label>
+    <input type="password" formControlName="password" required />
+
+    <label for="confirmPassword">Confirm Password</label>
+    <input type="password" formControlName="confirmPassword" required />
+  </div>
+
+  <div class="button">
+    <button type="submit">Register</button>
+    <button type="reset" (click)="onReset()">Reset</button>
+  </div>
+</form>
+
+<div class="acknowledgment" *ngIf="showAck">
+  <p class="success">Consumer Registration successful.</p>
+  <p><strong>Customer ID:</strong> <span>{{ registeredUser?.userId }}</span></p>
+  <p><strong>Customer Name:</strong> <span>{{ registeredUser?.title }} {{ registeredUser?.name }}</span></p>
+  <p><strong>Email:</strong> <span>{{ registeredUser?.email }}</span></p>
+</div>
+
+===== registration.component.css =====
+body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+    background: #f4f7f8;
+    margin: 0;
+    padding: 20px;
+    color: #333;
+}
+
+.consumerDetail{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.UserDetails{
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    align-items: center;
+    justify-content: center;
+}
+
+.loginDetails{
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+}
+
+.app-registration {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.app-registration h1 {
+    font-size: 2.5em;
+    color: #2c3e50;
+}
+
+form {
+    /* max-width: 700px; */
+    margin: auto;
+    background: #ffffff;
+    padding: 30px;
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+form h1{
+    text-align: center;
+    text-decoration: underline;
+    padding-bottom: 30px;
+    color: #2980b9; 
+}
+
+form h3 {
+    border-bottom: 2px solid #3498db;
+    padding-bottom: 5px;
+    margin-bottom: 20px;
+    color: #2980b9;
+}
+
+label {
+    display: block;
+    margin-top: 15px;
+    font-weight: 600;
+    margin-inline: 55px;
+}
+
+input[type="text"],
+input[type="number"],
+input[type="email"],
+input[type="password"],
+select {
+    width: 100%;
+    padding: 10px;
+    margin-left: -36px;
+    margin-top: 18px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    box-sizing: border-box;
+}
+
+.button {
+    text-align: center;
+    margin-top: 30px;
+}
+
+button {
+    background-color: #3498db;
+    color: white;
+    padding: 12px 25px;
+    margin: 10px;
+    border: none;
+    border-radius: 8px;
+    font-size: 1em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+button:hover {
+    background-color: #2980b9;
+}
+
+.acknowledgment {
+    max-width: 700px;
+    margin: 30px auto;
+    background: #e8f8f5;
+    padding: 20px;
+    border-left: 5px solid #2ecc71;
+    border-radius: 8px;
+}
+
+.success {
+    color: #27ae60;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+.acknowledgment {
+    
+    max-width: 700px;
+    margin: 30px auto;
+    background: #e8f8f5;
+    padding: 25px;
+    border-left: 5px solid #2ecc71;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    font-size: 1em;
+}
+
+.acknowledgment p {
+    margin: 10px 0;
+}
+
+.acknowledgment .success {
+    color: #27ae60;
+    font-weight: bold;
+    font-size: 1.2em;
+}
+
+===== registration.component.ts =====
+import { Component } from '@angular/core';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { Router } from '@angular/router'; // For navigation
+
+@Component({
+  selector: 'app-registration',
+  templateUrl: './registration.component.html',
+  styleUrls: ['./registration.component.css']
+})
+export class RegistrationComponent {
+  registrationForm: FormGroup;
+  showAck = false;
+  registeredUser: any;
+
+  constructor(private fb: FormBuilder, private router: Router) {
+    // Initialize form with validation
+    this.registrationForm = this.fb.group({
+      title: ['', Validators.required],
+      name: ['', [Validators.required, Validators.pattern(/^[A-Za-z\s]+$/)]],
+      countryCode: ['+91', Validators.required],
+      mobile: ['', [Validators.required, Validators.pattern(/^[0-9]{10}$/)]],
+      email: ['', [Validators.required, Validators.email]],
+      password: ['', [Validators.required, Validators.minLength(6)]],
+      confirmPassword: ['', Validators.required]
+    }, { validator: this.passwordMatchValidator });
+  }
+
+  // Custom validator to check password match
+  passwordMatchValidator(form: FormGroup) {
+    const password = form.get('password')?.value;
+    const confirmPassword = form.get('confirmPassword')?.value;
+    return password === confirmPassword ? null : { mismatch: true };
+  }
+
+  // Submit form using async/await and fetch
+  async onSubmit() {
+    if (this.registrationForm.valid) {
+      const customerData = this.registrationForm.value;
+      delete customerData.confirmPassword;
+
+      try {
+        const response = await fetch('http://localhost:8084/api/customers/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(customerData)
+      });
+
+        if (!response.ok) {
+          throw new Error('Failed to register customer');
+        }
+
+        const result = await response.json();
+        console.log('Registration response:', result); // Debug log
+        
+        // Combine form data with response data to ensure we have all fields
+        this.registeredUser = {
+          ...customerData, // Original form data
+          ...result,       // Backend response
+          // Map the correct field names from backend response
+          userId: result.consumerId || 'Generated after registration',
+          title: result.title || customerData.title,
+          name: result.customerName || customerData.name, // Use form data since backend returns null
+          email: result.email || customerData.email
+        };
+        this.showAck = true;
+
+        // Hide acknowledgment after 3 seconds and redirect to login
+        setTimeout(() => {
+          this.showAck = false;
+          this.router.navigate(['/login']);
+        }, 3000);
+
+      } catch (error) {
+        console.error('Registration error:', error);
+        if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+          alert('Unable to connect to server. Please make sure the backend server is running on port 8084.');
+        } else {
+          alert('Registration failed. Please try again.');
+        }
+      }
+    } else {
+      alert('Please correct the errors in the form before submitting.');
+    }
+  }
+
+  // Reset form
+  onReset() {
+    this.registrationForm.reset();
+    this.showAck = false;
+  }
+
+  // Navigate to login page
+  goToLogin() {
+    this.router.navigate(['/login']);
+  }
+}
+
+===== registration.component.spec.ts =====
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Router } from '@angular/router';
+import { RegistrationComponent } from './registration.component';
+
+describe('RegistrationComponent', () => {
+  let component: RegistrationComponent;
+  let fixture: ComponentFixture<RegistrationComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [ RegistrationComponent ]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(RegistrationComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+==========================================================
+3. HOME COMPONENT
+==========================================================
+
+===== home.component.html =====
+<div class="container">
+  <!-- <router-outlet></router-outlet>  -->
+  <div class="container">
+    <h2>Welcome to Your Dashboard</h2>
+    <p>Please select an option from the menu above.</p>
+  </div>
+</div>
+
+===== home.component.css =====
+/* Reset and base styles */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Segoe UI', Tahoma, sans-serif;
+  background-color: #f4f6f8;
+  color: #333;
+}
+
+.navbar {
+  background-color: #007bff;
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  color: white;
+}
+
+.navbar a {
+  color: white;
+  text-decoration: none;
+  margin-right: 15px;
+  font-weight: 500;
+}
+
+.navbar a:hover {
+  text-decoration: underline;
+}
+
+.user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.user-info button {
+  background-color: #ff4d4d;
+  border: none;
+  padding: 6px 12px;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.user-info button:hover {
+  background-color: #e60000;
+}
+
+/* Container styles */
+.container {
+  max-width: 600px;
+  margin: 40px auto;
+  background-color: white;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  text-align: center;
+}
+
+h2 {
+  color: #004aad;
+  margin-bottom: 20px;
+}
+
+p {
+  font-size: 16px;
+  color: #555;
+}
+
+===== home.component.ts =====
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+
+@Component({
+  selector: 'app-home',
+  templateUrl: './home.component.html',
+  styleUrls: ['./home.component.css']
+})
+export class HomeComponent implements OnInit {
+  username: string = 'User';
+  // userId: number= localStorage.getItem('userId');
+
+  constructor(private router: Router) {}
+
+  ngOnInit(): void {
+    // const storedUsername = localStorage.getItem(userId);
+    // this.userId = this.userId ?? 'User';
+  }
+
+  
+  goToHome(): void {
+    this.router.navigate(['/home']).then(() => {
+      window.location.reload();
+    });
+  }
+
+  
+
+  goToPage(page: string): void {
+    this.router.navigate([`/${page}`]);
+  }
+
+
+
+  logout(): void {
+    localStorage.removeItem('username');
+    this.router.navigate(['/login']); 
+  }
+}
+
+===== home.component.spec.ts =====
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+import { HomeComponent } from './home.component';
+
+describe('HomeComponent', () => {
+  let component: HomeComponent;
+  let fixture: ComponentFixture<HomeComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [ HomeComponent ]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(HomeComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+==========================================================
+4. NAVBAR COMPONENT
+==========================================================
+
+===== navbar.component.html =====
+<div class="navbar">
+  <a (click)="goToHome()">Home</a>
+  <a (click)="goToPage('pay-bill')">Pay Bill</a>
+  <a (click)="goToPage('register-complaint')">Register Complaint</a>
+  <a (click)="goToPage('complaint-status')">Complaint Status</a>
+  <span class="user-info">
+    Welcome Customer {{ customerId }}
+    <button (click)="logout()">Logout</button>
+  </span>
+</div>
+
+===== navbar.component.css =====
+.navbar {
+  background-color: rgb(5, 164, 226);
+  padding: 10px;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  font-style: bold;
+}
+
+.navbar {
+    margin: -8px;
+  background-color: rgb(5, 164, 226);
+  padding: 12px 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: white;
+  flex-wrap: wrap;
+  cursor: pointer;
+}
+
+.navbar a {
+  color: white;
+  text-decoration: none;
+  margin-right: 15px;
+  font-weight: 500;
+}
+
+.navbar a:hover {
+  text-decoration: underline;
+}
+
+.navbar button {
+    border-radius: 5px;
+    background-color: rgb(245, 110, 110);
+    color: white;
+    border-width: 0;
+    padding: 7px;
+    padding-left: 10px;
+    padding-right: 10px;
+    margin: 5px;
+    margin-left: 15px;
+}
+
+===== navbar.component.ts =====
+import { Component, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+@Component({
+  selector: 'app-navbar',
+  templateUrl: './navbar.component.html',
+  styleUrls: ['./navbar.component.css']
+})
+export class NavbarComponent implements OnInit{
+
+  customerId: string = 'User';
+
+  constructor(private router: Router) {}
+
+  ngOnInit(): void {
+    const storedUserId = localStorage.getItem('userId');
+    console.log('Stored userId from localStorage:', storedUserId); // Debug log
+    this.customerId = storedUserId || 'User';
+  }
+
+  goToHome(): void {
+    this.router.navigate(['/home']);
+  }
+
+  goToPage(page: string): void {
+    this.router.navigate([`/${page}`]);
+  }
+
+  logout(): void {
+    localStorage.removeItem('userId'); // Clear stored customer ID
+    console.log('User logged out');
+    this.router.navigate(['/login']);
+  }
+}
+
+===== navbar.component.spec.ts =====
+import { NavbarComponent } from './navbar.component';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+
+
+describe('NavbarComponent', () => {
+  let component: NavbarComponent;
+  let fixture: ComponentFixture<NavbarComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [ NavbarComponent ]
+    })
+    .compileComponents();
+
+    fixture = TestBed.createComponent(NavbarComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+});
+
+==========================================================
+5. APP COMPONENT (Main Application)
+==========================================================
+
+===== app.component.html =====
+<app-navbar *ngIf="showNavbar"></app-navbar>
+<router-outlet></router-outlet>
+
+===== app.component.css =====
+/* Default Angular CSS - can be customized as needed */
+
+===== app.component.ts =====
+import { Component, OnInit } from '@angular/core';
+import { Router, NavigationEnd } from '@angular/router';
+
+@Component({
+  selector: 'app-root',
+  templateUrl: './app.component.html',
+  styleUrls: ['./app.component.css']
+})
+export class AppComponent implements OnInit {
+  title = 'project';
+  showNavbar = false;
+
+  constructor(private router: Router) {}
+
+  ngOnInit() {
+    this.router.events.subscribe(event => {
+      if (event instanceof NavigationEnd) {
+        console.log('Current route:', event.url); // Debug log
+        // Show navbar only when not on login or register pages
+        this.showNavbar = !['/login', '/register', '/'].includes(event.url);
+        console.log('Show navbar:', this.showNavbar); // Debug log
+      }
+    });
+  }
+}
+
+===== app.component.spec.ts =====
+import { TestBed } from '@angular/core/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import { AppComponent } from './app.component';
+
+describe('AppComponent', () => {
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      imports: [
+        RouterTestingModule
+      ],
+      declarations: [
+        AppComponent
+      ],
+    }).compileComponents();
+  });
+
+  it('should create the app', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    expect(app).toBeTruthy();
+  });
+
+  it(`should have as title 'project'`, () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    const app = fixture.componentInstance;
+    expect(app.title).toEqual('project');
+  });
+
+  it('should render title', () => {
+    const fixture = TestBed.createComponent(AppComponent);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.querySelector('.content span')?.textContent).toContain('project app is running!');
+  });
+});
+
+==========================================================
+6. ROUTING AND MODULE CONFIGURATION
+==========================================================
+
+===== app-routing.module.ts =====
+import { NgModule } from '@angular/core';
+import { RouterModule, Routes } from '@angular/router';
+import { LoginComponent } from './login/login.component';
+import { RegistrationComponent } from './registration/registration.component';
+import { HomeComponent } from './home/home.component';
+
+const routes: Routes = [
+  { path: '', redirectTo: '/login', pathMatch: 'full' },
+  { path: 'login', component: LoginComponent },
+  { path: 'register', component: RegistrationComponent },
+  { path: 'home', component: HomeComponent },
+  { path: '**', redirectTo: '/login' }
+];
+
+@NgModule({
+  imports: [RouterModule.forRoot(routes)],
+  exports: [RouterModule]
+})
+export class AppRoutingModule { }
+
+===== app.module.ts =====
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { ReactiveFormsModule } from '@angular/forms';
+
+import { AppRoutingModule } from './app-routing.module';
+import { AppComponent } from './app.component';
+import { LoginComponent } from './login/login.component';
+import { RegistrationComponent } from './registration/registration.component';
+import { HomeComponent } from './home/home.component';
+import { NavbarComponent } from './navbar/navbar.component';
+
+@NgModule({
+  declarations: [
+    AppComponent,
+    LoginComponent,
+    RegistrationComponent,
+    HomeComponent,
+    NavbarComponent
+  ],
+  imports: [
+    BrowserModule,
+    AppRoutingModule,
+    ReactiveFormsModule
+  ],
+  providers: [],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+
+==========================================================
+BACKEND API ENDPOINTS
+==========================================================
+
+1. Registration: POST http://localhost:8084/api/customers/register
+   Request Body: {
+     "title": "Mr",
+     "name": "Ankit Vishwakarma", 
+     "countryCode": "+91",
+     "mobile": "1234567890",
+     "email": "ankit99aug@gmail.com",
+     "password": "123456"
+   }
+   
+   Response: {
+     "consumerId": 13,
+     "title": "Mr",
+     "customerName": null,
+     "email": "ankit99aug@gmail.com", 
+     "mobileNumber": null,
+     "password": "123456",
+     "status": true
+   }
+
+2. Login: POST http://localhost:8084/api/customers/login
+   Request Body: {
+     "email": "ankit99aug@gmail.com",
+     "password": "123456"
+   }
+   
+   Response: {
+     "consumerId": 7,
+     "title": "Mr", 
+     "customerName": null,
+     "email": "ankit99aug@gmail.com",
+     "mobileNumber": null,
+     "password": "123456",
+     "status": true
+   }
+
+==========================================================
+PROJECT STRUCTURE
+==========================================================
+
+src/
+├── app/
+│   ├── login/
+│   │   ├── login.component.html
+│   │   ├── login.component.css
+│   │   ├── login.component.ts
+│   │   └── login.component.spec.ts
+│   ├── registration/
+│   │   ├── registration.component.html
+│   │   ├── registration.component.css
+│   │   ├── registration.component.ts
+│   │   └── registration.component.spec.ts
+│   ├── home/
+│   │   ├── home.component.html
+│   │   ├── home.component.css
+│   │   ├── home.component.ts
+│   │   └── home.component.spec.ts
+│   ├── navbar/
+│   │   ├── navbar.component.html
+│   │   ├── navbar.component.css
+│   │   ├── navbar.component.ts
+│   │   └── navbar.component.spec.ts
+│   ├── app.component.html
+│   ├── app.component.css
+│   ├── app.component.ts
+│   ├── app.component.spec.ts
+│   ├── app-routing.module.ts
+│   └── app.module.ts
+
+==========================================================
+FEATURES IMPLEMENTED
+==========================================================
+
+1. Login Component:
+   - Reactive form validation
+   - Email and password authentication
+   - Error handling for network issues
+   - Automatic redirect to home after successful login
+   - Stores customer ID in localStorage
+
+2. Registration Component:
+   - Customer registration form with validation
+   - Password confirmation validation
+   - Success acknowledgment display
+   - Automatic redirect to login after registration
+   - Handles backend response mapping
+
+3. Home Component:
+   - Dashboard layout
+   - Welcome message
+   - Ready for additional features
+
+4. Navbar Component:
+   - Navigation links
+   - Displays customer ID from localStorage
+   - Logout functionality with localStorage cleanup
+   - Conditional visibility (hidden on login/register pages)
+
+5. App Component:
+   - Routing configuration
+   - Navbar visibility logic
+   - Router outlet for component rendering
+
+6. Features:
+   - Responsive design
+   - Form validation
+   - API integration
+   - Local storage management
+   - Route navigation
+   - Error handling
+   - Debug logging
+
+==========================================================
+END OF FILE
+==========================================================

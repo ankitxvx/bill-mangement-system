@@ -84,8 +84,7 @@ export class RegistrationComponent {
       alert('Please correct the errors in the form before submitting.');
     }
   }
-
-  // Reset form
+// Reset form
   onReset() {
     this.registrationForm.reset();
     this.showAck = false;
